@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#4facfe">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="追踪">
+  <link rel="manifest" href="/manifest.json">
+  <style>
+/* style.css — 移动端优先，手机App风格 */
+
+/* ===== Reset & Variables ===== */
+:root {
+  --primary: #4facfe;
+  --primary-dark: #3d8fd9;
+  --danger: #ff6b6b;
+  --danger-dark: #ee5a24;
+  --success: #4caf50;
+  --gold: #ffd700;
+  --gold-dark: #f0a500;
+  --bg: #f5f6fa;
+  --card-bg: #ffffff;
+  --text: #1a1a2e;
+  --text-secondary: #666;
+  --text-muted: #999;
+  --border: #eee;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --radius: 14px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 16px;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ===== App Shell ===== */
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+#content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  padding-bottom: calc(70px + var(--safe-bottom));
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ===== Tab Bar ===== */
+#tab-bar {
+  display: flex;
+  background: var(--card-bg);
+  border-top: 1px solid var(--border);
+  padding-bottom: var(--safe-bottom);
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 480px;
+  margin: 0 auto;
+  z-index: 100;
+}
+
+.tab-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 11px;
+  cursor: pointer;
+  transition: color 0.2s;
+  border-top: 2px solid transparent;
+}
+
+.tab-btn.active {
+  color: var(--primary);
+  border-top-color: var(--primary);
+}
+
+.tab-icon { font-size: 22px; margin-bottom: 2px; }
+
+/* ===== Pages ===== */
+.page { display: none; }
+.page.active { display: block; }
+
+/* ===== Goal Card ===== */
+.goal-card {
+  border-radius: var(--radius);
+  padding: 20px;
+  color: #fff;
+  margin-bottom: 16px;
+  position: relative;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
+
+.goal-card.weight {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+}
+
+.goal-card.savings {
+  background: linear-gradient(135deg, #f0a500, #ffd700);
+  color: #1a1a2e;
+}
+
+.goal-card .goal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.goal-card .goal-label { font-size: 13px; opacity: 0.85; }
+.goal-card .goal-value { font-size: 24px; font-weight: 700; }
+
+.goal-card .goal-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  opacity: 0.8;
+  margin-bottom: 4px;
+}
+
+.goal-card .progress-bar {
+  background: rgba(255,255,255,0.25);
+  border-radius: 10px;
+  height: 10px;
+  margin: 12px 0 8px;
+  overflow: hidden;
+}
+
+.goal-card.savings .progress-bar {
+  background: rgba(0,0,0,0.1);
+}
+
+.goal-card .progress-fill {
+  height: 100%;
+  background: #fff;
+  border-radius: 10px;
+  transition: width 0.4s ease;
+}
+
+.goal-card.savings .progress-fill {
+  background: #1a1a2e;
+}
+
+.goal-card .progress-text {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.goal-card .goal-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  margin-top: 8px;
+  opacity: 0.7;
+}
+
+/* ===== Record Button ===== */
+.btn-record {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--primary);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+
+.btn-record:active {
+  transform: scale(0.98);
+}
+
+.btn-record.disabled {
+  background: #ccc;
+  color: #999;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ===== Chart ===== */
+.chart-container {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.chart-header h3 { font-size: 14px; }
+
+.chart-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.chart-tab {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: none;
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.chart-tab.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.chart-container canvas {
+  width: 100%;
+  height: 160px;
+}
+
+/* ===== Record List ===== */
+.record-list h3 {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.record-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  background: var(--card-bg);
+  border-radius: 10px;
+  margin-bottom: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.record-item .record-value {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.record-item .record-date {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: 8px;
+}
+
+.record-item .record-diff {
+  font-size: 12px;
+}
+
+.record-diff.down { color: var(--success); }
+.record-diff.up { color: var(--danger); }
+.record-diff.neutral { color: var(--text-muted); }
+
+.record-item .record-delete {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+/* ===== Settings ===== */
+.settings-group { margin-top: 8px; }
+
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+  box-shadow: var(--shadow);
+}
+
+.setting-item .setting-info h4 { font-size: 14px; margin-bottom: 4px; }
+.setting-item .setting-info p { font-size: 12px; color: var(--text-muted); }
+
+/* Toggle Switch */
+.toggle {
+  width: 52px;
+  height: 30px;
+  background: #ccc;
+  border-radius: 15px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.toggle.on { background: var(--primary); }
+
+.toggle::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+
+.toggle.on::after { transform: translateX(22px); }
+
+/* ===== Modal ===== */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 200;
+}
+
+.modal-overlay.hidden { display: none; }
+
+.modal-box {
+  background: var(--card-bg);
+  border-radius: 20px 20px 0 0;
+  padding: 24px 20px;
+  padding-bottom: calc(24px + var(--safe-bottom));
+  width: 100%;
+  max-width: 480px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-box h3 { margin-bottom: 16px; font-size: 18px; }
+
+.modal-box .form-group { margin-bottom: 14px; }
+
+.modal-box label {
+  display: block;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.modal-box input, .modal-box textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: inherit;
+  -webkit-appearance: none;
+}
+
+.modal-box textarea {
+  height: 60px;
+  resize: none;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.btn {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn:active { transform: scale(0.97); }
+
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-cancel { background: var(--border); color: var(--text); }
+.btn-danger { background: var(--danger); color: #fff; }
+
+/* ===== Toast ===== */
+.toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  z-index: 300;
+  transition: opacity 0.3s;
+}
+
+.toast.hidden { opacity: 0; pointer-events: none; }
+
+/* ===== Empty State ===== */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+}
+
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state p { font-size: 14px; }
+
+/* ===== Scrollbar ===== */
+#content::-webkit-scrollbar { width: 0; }
+
+/* ===== Danger Zone ===== */
+.danger-zone {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.danger-zone h4 {
+  color: var(--danger);
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+/* ===== Mobile Input Fixes ===== */
+input, textarea, select, button { font-size: 16px; }
+
+/* iOS Safe Area */
+@supports (padding: max(0px)) {
+  #tab-bar { padding-bottom: max(8px, var(--safe-bottom)); }
+}
+
+</style>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+  <title>个人追踪</title>
+</head>
+<body>
+  <!-- 页面容器 -->
+  <div id="app">
+    <!-- Tab 导航 -->
+    <nav id="tab-bar" aria-label="主导航">
+      <button class="tab-btn active" data-tab="weight" role="tab" aria-selected="true" aria-controls="page-weight">
+        <span class="tab-icon" aria-hidden="true">⚡</span>
+        <span class="tab-label">减肥</span>
+      </button>
+      <button class="tab-btn" data-tab="savings" role="tab" aria-selected="false" aria-controls="page-savings">
+        <span class="tab-icon" aria-hidden="true">💰</span>
+        <span class="tab-label">存钱</span>
+      </button>
+      <button class="tab-btn" data-tab="settings" role="tab" aria-selected="false" aria-controls="page-settings">
+        <span class="tab-icon" aria-hidden="true">⚙️</span>
+        <span class="tab-label">设置</span>
+      </button>
+    </nav>
+
+    <!-- 内容区域 -->
+    <main id="content">
+      <!-- 减肥页面 -->
+      <section id="page-weight" class="page active" role="tabpanel" aria-labelledby="tab-weight">
+        <div class="goal-card" id="weight-goal-card"></div>
+        <button class="btn-record" id="weight-record-btn">➕ 记录今日体重</button>
+        <div class="chart-container" id="weight-chart-container"></div>
+        <div class="record-list" id="weight-record-list"></div>
+      </section>
+
+      <!-- 存钱页面 -->
+      <section id="page-savings" class="page" role="tabpanel">
+        <div class="goal-card" id="savings-goal-card"></div>
+        <button class="btn-record" id="savings-record-btn">➕ 记录存款</button>
+        <div class="chart-container" id="savings-chart-container"></div>
+        <div class="record-list" id="savings-record-list"></div>
+      </section>
+
+      <!-- 设置页面 -->
+      <section id="page-settings" class="page">
+        <h2>⚙️ 设置</h2>
+        <div class="settings-group" id="settings-content"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 通用弹窗 -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal-box" id="modal-box"></div>
+  </div>
+
+  <!-- Toast 提示 -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- JS 按依赖顺序加载 -->
+  <script>
+// db.js — IndexedDB 封装
+const DB_NAME = 'TrackerDB';
+const DB_VERSION = 1;
+
+let db = null;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('goals')) {
+        const goalsStore = db.createObjectStore('goals', { keyPath: 'id', autoIncrement: true });
+        goalsStore.createIndex('type', 'type', { unique: false });
+      }
+      if (!db.objectStoreNames.contains('records')) {
+        const recordsStore = db.createObjectStore('records', { keyPath: 'id', autoIncrement: true });
+        recordsStore.createIndex('goalId', 'goalId', { unique: false });
+        recordsStore.createIndex('date', 'date', { unique: false });
+      }
+      if (!db.objectStoreNames.contains('settings')) {
+        db.createObjectStore('settings', { keyPath: 'key' });
+      }
+    };
+    req.onsuccess = (e) => { db = e.target.result; resolve(db); };
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+// ===== Goals =====
+function getGoal(type) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('goals', 'readonly');
+    const store = tx.objectStore('goals');
+    const idx = store.index('type');
+    const req = idx.getAll(type);
+    req.onsuccess = () => resolve(req.result[0] || null);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+function saveGoal(goal) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('goals', 'readwrite');
+    const store = tx.objectStore('goals');
+    if (goal.id) {
+      const req = store.put(goal);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = (e) => reject(e.target.error);
+    } else {
+      const req = store.add(goal);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = (e) => reject(e.target.error);
+    }
+  });
+}
+
+// ===== Records =====
+function getRecords(goalId) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('records', 'readonly');
+    const store = tx.objectStore('records');
+    const idx = store.index('goalId');
+    const req = idx.getAll(goalId);
+    req.onsuccess = () => {
+      const records = req.result;
+      records.sort((a, b) => new Date(b.date) - new Date(a.date));
+      resolve(records);
+    };
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+function addRecord(record) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('records', 'readwrite');
+    const store = tx.objectStore('records');
+    const req = store.add(record);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+function deleteRecord(id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('records', 'readwrite');
+    const store = tx.objectStore('records');
+    const req = store.delete(id);
+    req.onsuccess = () => resolve();
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+// 获取最近一条记录
+function getLatestRecord(goalId) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('records', 'readonly');
+    const store = tx.objectStore('records');
+    const idx = store.index('goalId');
+    const req = idx.getAll(goalId);
+    req.onsuccess = () => {
+      const records = req.result;
+      if (records.length === 0) return resolve(null);
+      records.sort((a, b) => new Date(b.date) - new Date(a.date));
+      resolve(records[0]);
+    };
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+// ===== Settings =====
+function getSetting(key) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('settings', 'readonly');
+    const store = tx.objectStore('settings');
+    const req = store.get(key);
+    req.onsuccess = () => resolve(req.result ? req.result.value : null);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+function setSetting(key, value) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('settings', 'readwrite');
+    const store = tx.objectStore('settings');
+    const req = store.put({ key, value });
+    req.onsuccess = () => resolve();
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+function getAllSettings() {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('settings', 'readonly');
+    const store = tx.objectStore('settings');
+    const req = store.getAll();
+    req.onsuccess = () => {
+      const map = {};
+      req.result.forEach(s => { map[s.key] = s.value; });
+      resolve(map);
+    };
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+// 导出全部数据
+function exportAllData() {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const tx = db.transaction(['goals', 'records', 'settings'], 'readonly');
+      const goals = await new Promise((r, rj) => {
+        const req = tx.objectStore('goals').getAll();
+        req.onsuccess = () => r(req.result);
+        req.onerror = (e) => rj(e.target.error);
+      });
+      const records = await new Promise((r, rj) => {
+        const req = tx.objectStore('records').getAll();
+        req.onsuccess = () => r(req.result);
+        req.onerror = (e) => rj(e.target.error);
+      });
+      const settings = await new Promise((r, rj) => {
+        const req = tx.objectStore('settings').getAll();
+        req.onsuccess = () => r(req.result);
+        req.onerror = (e) => rj(e.target.error);
+      });
+      resolve({ goals, records, settings });
+    } catch (e) { reject(e); }
+  });
+}
+
+// 清除所有数据
+function clearAllData() {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(['goals', 'records', 'settings'], 'readwrite');
+    tx.objectStore('goals').clear();
+    tx.objectStore('records').clear();
+    tx.objectStore('settings').clear();
+    tx.oncomplete = () => resolve();
+    tx.onerror = (e) => reject(e.target.error);
+  });
+}
+
+</script>
+  <script>
+// charts.js — Canvas 图表绘制
+function renderChart(type, records, days) {
+  const container = document.getElementById(type + '-chart-container');
+  if (!container) return;
+
+  const title = type === 'weight' ? '📈 体重变化趋势' : '📈 存款增长趋势';
+  container.innerHTML = `
+    <div class="chart-header">
+      <h3>${title}</h3>
+      <div class="chart-tabs">
+        <button class="chart-tab ${days === 7 ? 'active' : ''}" data-days="7">7天</button>
+        <button class="chart-tab ${days === 30 ? 'active' : ''}" data-days="30">30天</button>
+      </div>
+    </div>
+    <canvas id="${type}-chart-canvas"></canvas>
+  `;
+
+  // Tab 切换事件
+  container.querySelectorAll('.chart-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      currentChartMode[type] = parseInt(tab.dataset.days);
+      renderChart(type, records, parseInt(tab.dataset.days));
+    });
+  });
+
+  // 绘制图表
+  const canvas = document.getElementById(type + '-chart-canvas');
+  if (!canvas || records.length === 0) {
+    if (canvas) {
+      canvas.style.display = 'none';
+      const emptyDiv = document.createElement('div');
+      emptyDiv.className = 'empty-state';
+      emptyDiv.innerHTML = '<p style="padding:20px">暂无数据</p>';
+      canvas.parentNode.appendChild(emptyDiv);
+    }
+    return;
+  }
+
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentNode.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 160 * dpr;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = '160px';
+  ctx.scale(dpr, dpr);
+
+  const W = rect.width;
+  const H = 160;
+  const padding = { top: 10, right: 10, bottom: 25, left: 35 };
+  const plotW = W - padding.left - padding.right;
+  const plotH = H - padding.top - padding.bottom;
+
+  // 筛选最近 days 天的数据
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  const filtered = records.filter(r => new Date(r.date) >= cutoff).reverse();
+
+  if (filtered.length === 0) {
+    ctx.fillStyle = '#999';
+    ctx.font = '14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('暂无数据', W / 2, H / 2);
+    return;
+  }
+
+  const values = filtered.map(r => r.value);
+  const minVal = Math.min(...values) * 0.95;
+  const maxVal = Math.max(...values) * 1.05;
+  const range = maxVal - minVal || 1;
+
+  // 绘制网格线
+  ctx.strokeStyle = '#eee';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 4; i++) {
+    const y = padding.top + (plotH / 4) * i;
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(W - padding.right, y);
+    ctx.stroke();
+
+    const val = maxVal - (range / 4) * i;
+    ctx.fillStyle = '#999';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(val.toFixed(1), padding.left - 4, y + 4);
+  }
+
+  // 绘制柱状图
+  const barGap = 4;
+  const barW = Math.max(8, (plotW / filtered.length) - barGap);
+
+  filtered.forEach((record, i) => {
+    const x = padding.left + (plotW / filtered.length) * i + barGap / 2;
+    const barH = ((record.value - minVal) / range) * plotH;
+    const y = padding.top + plotH - Math.max(barH, 2);
+
+    // 渐变色
+    const gradient = ctx.createLinearGradient(x, y, x, padding.top + plotH);
+    if (type === 'weight') {
+      gradient.addColorStop(0, '#4facfe');
+      gradient.addColorStop(1, 'rgba(79,172,254,0.3)');
+    } else {
+      gradient.addColorStop(0, '#ffd700');
+      gradient.addColorStop(1, 'rgba(255,215,0,0.3)');
+    }
+    ctx.fillStyle = gradient;
+
+    // 圆角柱
+    const radius = Math.min(4, barW / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + barW - radius, y);
+    ctx.arcTo(x + barW, y, x + barW, y + radius, radius);
+    ctx.lineTo(x + barW, padding.top + plotH);
+    ctx.lineTo(x, padding.top + plotH);
+    ctx.lineTo(x, y + radius);
+    ctx.arcTo(x, y, x + radius, y, radius);
+    ctx.fill();
+
+    // 数值标注
+    ctx.fillStyle = '#666';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(record.value, x + barW / 2, y - 5);
+
+    // 日期标注
+    const d = new Date(record.date);
+    const dateStr = (d.getMonth() + 1) + '/' + d.getDate();
+    ctx.fillStyle = '#999';
+    ctx.font = '9px sans-serif';
+    ctx.fillText(dateStr, x + barW / 2, padding.top + plotH + 15);
+  });
+}
+
+</script>
+  <script>
+// notify.js — 提醒系统
+
+// ===== 请求通知权限 =====
+async function requestNotificationPermission() {
+  if (!('Notification' in window)) return false;
+  if (Notification.permission === 'granted') return true;
+  if (Notification.permission === 'denied') return false;
+  const result = await Notification.requestPermission();
+  return result === 'granted';
+}
+
+// ===== 发送系统通知 =====
+function sendNotification(title, body) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  new Notification(title, {
+    body,
+    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🎯</text></svg>',
+    vibrate: [200, 100, 200]
+  });
+}
+
+// ===== 应用内提醒检查 =====
+async function checkInAppReminders() {
+  const weightReminder = await getSetting('weight_reminder');
+  const savingsReminder = await getSetting('savings_reminder');
+
+  if (weightReminder) {
+    const goal = await getGoal('weight');
+    if (goal) {
+      const lastRecord = await getLatestRecord(goal.id);
+      if (lastRecord) {
+        const daysSince = Math.floor((new Date() - new Date(lastRecord.date)) / (1000 * 60 * 60 * 24));
+        if (daysSince >= 7) {
+          showToast('⚡ 该称体重了！已超过7天');
+        }
+      } else {
+        showToast('⚡ 记录你的第一次体重吧');
+      }
+    }
+  }
+
+  if (savingsReminder) {
+    const goal = await getGoal('savings');
+    if (goal) {
+      const lastRecord = await getLatestRecord(goal.id);
+      const today = new Date().toISOString().split('T')[0];
+      if (!lastRecord || lastRecord.date !== today) {
+        showToast('💰 今天还没有存钱记录哦');
+      }
+    }
+  }
+}
+
+// ===== 定时检查 =====
+let notifyInterval = null;
+
+async function scheduleNotifications() {
+  clearInterval(notifyInterval);
+  notifyInterval = setInterval(async () => {
+    // 称重提醒
+    const weightReminder = await getSetting('weight_reminder');
+    if (weightReminder) {
+      const goal = await getGoal('weight');
+      if (goal) {
+        const lastRecord = await getLatestRecord(goal.id);
+        if (lastRecord) {
+          const daysSince = Math.floor((new Date() - new Date(lastRecord.date)) / (1000 * 60 * 60 * 24));
+          if (daysSince >= 7) {
+            sendNotification('⚡ 称重提醒', '距离上次称重已过 ' + daysSince + ' 天，该记录体重了！');
+          }
+        }
+      }
+    }
+
+    // 存钱提醒 — 检查是否到了用户设定的时间
+    const savingsReminder = await getSetting('savings_reminder');
+    if (savingsReminder) {
+      const remindTime = await getSetting('savings_remind_time');
+      const now = new Date();
+      const currentHM = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+      if (remindTime && currentHM === remindTime) {
+        sendNotification('💰 存钱提醒', '别忘了今天存一笔钱哦！');
+      }
+    }
+  }, 60000); // 每分钟检查一次
+}
+
+</script>
+  <script>
+// app.js — 应用主控
+let currentTab = 'weight';
+let currentChartMode = { weight: 7, savings: 7 };
+
+// ===== 初始化 =====
+document.addEventListener('DOMContentLoaded', async () => {
+  await openDB();
+  initTabs();
+  initSettings();
+  await switchTab('weight');
+  checkInAppReminders();
+  scheduleNotifications();
+});
+
+// ===== Tab 切换 =====
+function initTabs() {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+}
+
+async function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tab);
+    b.setAttribute('aria-selected', b.dataset.tab === tab ? 'true' : 'false');
+  });
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + tab).classList.add('active');
+
+  if (tab === 'weight' || tab === 'savings') {
+    await loadGoalPage(tab);
+  } else if (tab === 'settings') {
+    await renderSettings();
+  }
+}
+
+// ===== 目标页面加载 =====
+async function loadGoalPage(type) {
+  const goal = await getGoal(type);
+  if (!goal) { showGoalSetupModal(type); return; }
+
+  const records = await getRecords(goal.id);
+  const currentValue = records.length > 0 ? records[0].value : null;
+  const startValue = await getStartValueForGoal(type, goal);
+
+  renderGoalCard(type, goal, currentValue, records.length > 0, startValue);
+  renderRecordButton(type, goal, records);
+  renderChart(type, records, currentChartMode[type]);
+  renderRecordList(type, goal, records);
+}
+
+async function getStartValueForGoal(type, goal) {
+  if (type === 'savings') return 0;
+  if (goal.initialWeight) return goal.initialWeight;
+  const records = await getRecords(goal.id);
+  if (records.length === 0) return null;
+  return records[records.length - 1].value;
+}
+
+// ===== 目标卡片渲染 =====
+function renderGoalCard(type, goal, currentValue, hasRecords, startValue) {
+  const card = document.getElementById(type + '-goal-card');
+  const startDate = new Date(goal.startDate);
+  const today = new Date();
+  const elapsedDays = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+  const remainingDays = Math.max(0, goal.duration - elapsedDays);
+  const unit = type === 'weight' ? 'kg' : '元';
+  const displayTarget = goal.target;
+
+  let percent = 0;
+  let displayCurrent = '—';
+
+  if (hasRecords && currentValue !== null && startValue !== null) {
+    displayCurrent = currentValue + ' ' + unit;
+    if (type === 'weight') {
+      percent = Math.round(((startValue - currentValue) / (startValue - goal.target)) * 100);
+    } else {
+      percent = Math.round((currentValue / goal.target) * 100);
+    }
+    percent = Math.max(0, Math.min(100, percent));
+  }
+
+  const cardClass = type === 'weight' ? 'weight' : 'savings';
+  card.className = 'goal-card ' + cardClass;
+  card.onclick = () => showGoalEditModal(type, goal);
+
+  card.innerHTML = `
+    <div class="goal-header">
+      <span class="goal-label">🎯 目标${type === 'weight' ? '体重' : '金额'}</span>
+      <span class="goal-value">${displayTarget} ${unit}</span>
+    </div>
+    <div class="goal-row">
+      <span>📊 当前${type === 'weight' ? '体重' : '存款'}</span>
+      <span>${displayCurrent}</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" style="width:${percent}%"></div>
+    </div>
+    <div class="progress-text">
+      <span>已完成 ${percent}%</span>
+      <span>${getRemainingText(type, goal, currentValue, hasRecords)}</span>
+    </div>
+    <div class="goal-meta">
+      <span>⏱ 开始：${formatDate(startDate)}</span>
+      <span>⏳ 已持续 ${elapsedDays} 天${remainingDays > 0 ? ' · 剩余 ' + remainingDays + ' 天' : ' · 已到期'}</span>
+    </div>
+  `;
+}
+
+function getRemainingText(type, goal, currentValue, hasRecords) {
+  const unit = type === 'weight' ? 'kg' : '元';
+  if (!hasRecords || currentValue === null) return '— ' + unit;
+  if (type === 'weight') {
+    const remain = Math.max(0, currentValue - goal.target);
+    return '还需减 ' + remain.toFixed(1) + ' ' + unit;
+  } else {
+    const remain = Math.max(0, goal.target - currentValue);
+    return '还需存 ' + remain + ' ' + unit;
+  }
+}
+
+// ===== 记录按钮渲染 =====
+function renderRecordButton(type, goal, records) {
+  const btn = document.getElementById(type + '-record-btn');
+  btn.className = 'btn-record';
+
+  if (type === 'weight') {
+    const lastRecord = records.length > 0 ? records[0] : null;
+    if (lastRecord) {
+      const lastDate = new Date(lastRecord.date);
+      const today = new Date();
+      const daysSince = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
+      if (daysSince < 7) {
+        btn.classList.add('disabled');
+        btn.textContent = '⏳ ' + (7 - daysSince) + ' 天后可记录体重';
+      } else {
+        btn.classList.remove('disabled');
+        btn.textContent = '➕ 记录今日体重';
+        btn.onclick = () => showRecordModal(type, goal.id);
+      }
+    } else {
+      btn.textContent = '➕ 记录今日体重';
+      btn.onclick = () => showRecordModal(type, goal.id);
+    }
+  } else {
+    btn.textContent = '➕ 记录存款';
+    btn.onclick = () => showRecordModal(type, goal.id);
+  }
+}
+
+// ===== 记录列表渲染 =====
+function renderRecordList(type, goal, records) {
+  const list = document.getElementById(type + '-record-list');
+  if (records.length === 0) {
+    list.innerHTML = `
+      <h3>📋 最近记录</h3>
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <p>暂无记录，开始记录吧</p>
+      </div>
+    `;
+    return;
+  }
+
+  const unit = type === 'weight' ? 'kg' : '元';
+  let html = '<h3>📋 最近记录</h3>';
+
+  records.slice(0, 20).forEach((record, i) => {
+    let diffHtml = '';
+    if (i < records.length - 1 && type === 'weight') {
+      const prev = records[i + 1];
+      const diff = (record.value - prev.value).toFixed(1);
+      if (diff < 0) diffHtml = `<span class="record-diff down">↓ ${Math.abs(diff)} ${unit}</span>`;
+      else if (diff > 0) diffHtml = `<span class="record-diff up">↑ ${diff} ${unit}</span>`;
+      else diffHtml = `<span class="record-diff neutral">—</span>`;
+    }
+
+    html += `
+      <div class="record-item">
+        <div>
+          <span class="record-value">${record.value} ${unit}</span>
+          <span class="record-date">${formatDate(new Date(record.date))}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${diffHtml}
+          <button class="record-delete" data-id="${record.id}">🗑</button>
+        </div>
+      </div>
+    `;
+  });
+
+  list.innerHTML = html;
+
+  list.querySelectorAll('.record-delete').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (confirm('删除这条记录？')) {
+        await deleteRecord(Number(btn.dataset.id));
+        await loadGoalPage(type);
+        showToast('已删除');
+      }
+    });
+  });
+}
+
+// ===== 弹窗系统 =====
+function showModal(html) {
+  document.getElementById('modal-box').innerHTML = html;
+  document.getElementById('modal-overlay').classList.remove('hidden');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.add('hidden');
+}
+
+document.getElementById('modal-overlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+// ===== 目标设置弹窗 =====
+function showGoalSetupModal(type) {
+  const label = type === 'weight' ? '目标体重 (kg)' : '目标金额 (元)';
+  const title = type === 'weight' ? '🎯 设定减肥目标' : '💰 设定存钱目标';
+
+  showModal(`
+    <h3>${title}</h3>
+    <div class="form-group">
+      <label>${label}</label>
+      <input type="number" id="modal-target" placeholder="输入目标值" min="0" step="0.1">
+    </div>
+    ${type === 'weight' ? `
+    <div class="form-group">
+      <label>当前体重 (kg)</label>
+      <input type="number" id="modal-initial" placeholder="输入当前体重" min="0" step="0.1">
+    </div>` : ''}
+    <div class="form-group">
+      <label>开始日期</label>
+      <input type="date" id="modal-start-date" value="${new Date().toISOString().split('T')[0]}">
+    </div>
+    <div class="form-group">
+      <label>预计持续时间 (天)</label>
+      <input type="number" id="modal-duration" placeholder="例如 90" min="1">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" id="modal-save-goal">保存目标</button>
+    </div>
+  `);
+
+  document.getElementById('modal-save-goal').onclick = async () => {
+    const target = parseFloat(document.getElementById('modal-target').value);
+    const startDate = document.getElementById('modal-start-date').value;
+    const duration = parseInt(document.getElementById('modal-duration').value);
+
+    if (!target || !startDate || !duration) { showToast('请填写完整'); return; }
+
+    const goalData = { type, target, startDate, duration };
+    if (type === 'weight') {
+      const initial = parseFloat(document.getElementById('modal-initial').value);
+      if (!initial) { showToast('请输入当前体重'); return; }
+      goalData.initialWeight = initial;
+      const goalId = await saveGoal(goalData);
+      await addRecord({ goalId, value: initial, date: startDate, note: '起始体重' });
+    } else {
+      await saveGoal(goalData);
+    }
+
+    closeModal();
+    await loadGoalPage(type);
+    showToast('目标已设定 ✅');
+  };
+}
+
+// ===== 目标编辑弹窗 =====
+function showGoalEditModal(type, goal) {
+  const label = type === 'weight' ? '目标体重 (kg)' : '目标金额 (元)';
+  const title = type === 'weight' ? '✏️ 编辑减肥目标' : '✏️ 编辑存钱目标';
+
+  showModal(`
+    <h3>${title}</h3>
+    <div class="form-group">
+      <label>${label}</label>
+      <input type="number" id="modal-target" value="${goal.target}" min="0" step="0.1">
+    </div>
+    <div class="form-group">
+      <label>开始日期</label>
+      <input type="date" id="modal-start-date" value="${goal.startDate}">
+    </div>
+    <div class="form-group">
+      <label>预计持续时间 (天)</label>
+      <input type="number" id="modal-duration" value="${goal.duration}" min="1">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" id="modal-update-goal">保存修改</button>
+    </div>
+  `);
+
+  document.getElementById('modal-update-goal').onclick = async () => {
+    goal.target = parseFloat(document.getElementById('modal-target').value);
+    goal.startDate = document.getElementById('modal-start-date').value;
+    goal.duration = parseInt(document.getElementById('modal-duration').value);
+
+    if (!goal.target || !goal.startDate || !goal.duration) { showToast('请填写完整'); return; }
+
+    await saveGoal(goal);
+    closeModal();
+    await loadGoalPage(type);
+    showToast('目标已更新 ✅');
+  };
+}
+
+// ===== 记录弹窗 =====
+function showRecordModal(type, goalId) {
+  const label = type === 'weight' ? '体重 (kg)' : '金额 (元)';
+  const title = type === 'weight' ? '⚡ 记录体重' : '💰 记录存款';
+
+  showModal(`
+    <h3>${title}</h3>
+    <div class="form-group">
+      <label>${label}</label>
+      <input type="number" id="modal-value" placeholder="输入数值" min="0" step="0.1">
+    </div>
+    <div class="form-group">
+      <label>日期</label>
+      <input type="date" id="modal-date" value="${new Date().toISOString().split('T')[0]}">
+    </div>
+    <div class="form-group">
+      <label>备注（可选）</label>
+      <textarea id="modal-note" placeholder="例如：今天吃得少"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" id="modal-save-record">保存</button>
+    </div>
+  `);
+
+  document.getElementById('modal-save-record').onclick = async () => {
+    const value = parseFloat(document.getElementById('modal-value').value);
+    const date = document.getElementById('modal-date').value;
+    const note = document.getElementById('modal-note').value.trim();
+
+    if (!value || !date) { showToast('请填写完整'); return; }
+
+    await addRecord({ goalId, value, date, note });
+    closeModal();
+    await loadGoalPage(type);
+    showToast('已记录 ✅');
+  };
+}
+
+// ===== 设置页面 =====
+async function initSettings() {
+  // 初始化默认设置
+  if (await getSetting('weight_reminder') === null) {
+    await setSetting('weight_reminder', true);
+  }
+  if (await getSetting('savings_reminder') === null) {
+    await setSetting('savings_reminder', true);
+  }
+  if (await getSetting('weight_unit') === null) {
+    await setSetting('weight_unit', 'kg');
+  }
+  if (await getSetting('savings_remind_time') === null) {
+    await setSetting('savings_remind_time', '20:00');
+  }
+  if (await getSetting('weight_remind_time') === null) {
+    await setSetting('weight_remind_time', '08:00');
+  }
+}
+
+async function renderSettings() {
+  const container = document.getElementById('settings-content');
+  const weightReminder = await getSetting('weight_reminder');
+  const savingsReminder = await getSetting('savings_reminder');
+  const weightUnit = await getSetting('weight_unit') || 'kg';
+  const savingsRemindTime = await getSetting('savings_remind_time') || '20:00';
+  const weightRemindTime = await getSetting('weight_remind_time') || '08:00';
+
+  container.innerHTML = `
+    <div class="settings-group">
+      <h3 style="font-size:14px;color:var(--text-secondary);margin-bottom:12px;">🔔 提醒设置</h3>
+
+      <div class="setting-item">
+        <div class="setting-info">
+          <h4>⚡ 称重提醒</h4>
+          <p>距上次记录满7天后提醒</p>
+        </div>
+        <div class="toggle ${weightReminder ? 'on' : ''}" id="toggle-weight-reminder"></div>
+      </div>
+
+      ${weightReminder ? `
+      <div class="setting-item">
+        <div class="setting-info"><h4>称重提醒时间</h4></div>
+        <input type="time" value="${weightRemindTime}" id="weight-remind-time" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:14px;">
+      </div>` : ''}
+
+      <div class="setting-item">
+        <div class="setting-info">
+          <h4>💰 存钱提醒</h4>
+          <p>每天定时提醒</p>
+        </div>
+        <div class="toggle ${savingsReminder ? 'on' : ''}" id="toggle-savings-reminder"></div>
+      </div>
+
+      ${savingsReminder ? `
+      <div class="setting-item">
+        <div class="setting-info"><h4>存钱提醒时间</h4></div>
+        <input type="time" value="${savingsRemindTime}" id="savings-remind-time" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:14px;">
+      </div>` : ''}
+    </div>
+
+    <div class="settings-group" style="margin-top:16px;">
+      <h3 style="font-size:14px;color:var(--text-secondary);margin-bottom:12px;">📐 偏好设置</h3>
+
+      <div class="setting-item">
+        <div class="setting-info"><h4>体重单位</h4></div>
+        <select id="weight-unit-select" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:14px;">
+          <option value="kg" ${weightUnit === 'kg' ? 'selected' : ''}>kg（公斤）</option>
+          <option value="jin" ${weightUnit === 'jin' ? 'selected' : ''}>斤</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="settings-group danger-zone">
+      <h4>⚠️ 数据管理</h4>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button class="btn btn-primary" id="btn-export-data">📤 导出数据</button>
+        <button class="btn btn-danger" id="btn-clear-data">🗑 清除所有</button>
+      </div>
+    </div>
+  `;
+
+  // 事件绑定
+  document.getElementById('toggle-weight-reminder').onclick = async function() {
+    const current = await getSetting('weight_reminder');
+    await setSetting('weight_reminder', !current);
+    if (!current) await requestNotificationPermission();
+    renderSettings();
+  };
+
+  document.getElementById('toggle-savings-reminder').onclick = async function() {
+    const current = await getSetting('savings_reminder');
+    await setSetting('savings_reminder', !current);
+    if (!current) await requestNotificationPermission();
+    renderSettings();
+  };
+
+  const savingsTimeInput = document.getElementById('savings-remind-time');
+  if (savingsTimeInput) {
+    savingsTimeInput.onchange = async () => {
+      await setSetting('savings_remind_time', savingsTimeInput.value);
+      showToast('已更新 ✅');
+    };
+  }
+
+  const weightTimeInput = document.getElementById('weight-remind-time');
+  if (weightTimeInput) {
+    weightTimeInput.onchange = async () => {
+      await setSetting('weight_remind_time', weightTimeInput.value);
+      showToast('已更新 ✅');
+    };
+  }
+
+  const unitSelect = document.getElementById('weight-unit-select');
+  if (unitSelect) {
+    unitSelect.onchange = async function() {
+      await setSetting('weight_unit', this.value);
+      showToast('单位已切换 ✅');
+    };
+  }
+
+  document.getElementById('btn-export-data').onclick = async () => {
+    const data = await exportAllData();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'tracker-backup-' + new Date().toISOString().split('T')[0] + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('数据已导出 ✅');
+  };
+
+  document.getElementById('btn-clear-data').onclick = async () => {
+    if (confirm('⚠️ 确定要清除所有数据吗？此操作不可恢复！')) {
+      if (confirm('再次确认：清除所有减肥和存钱数据？')) {
+        await clearAllData();
+        showToast('数据已清除');
+        switchTab('weight');
+      }
+    }
+  };
+}
+
+// ===== Toast =====
+let toastTimer;
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.remove('hidden');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.add('hidden'), 2000);
+}
+
+// ===== 工具函数 =====
+function formatDate(date) {
+  const m = date.getMonth() + 1;
+  const d = date.getDate();
+  return m + '月' + d + '日';
+}
+
+</script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js');
+    }
+  </script>
+</body>
+</html>
